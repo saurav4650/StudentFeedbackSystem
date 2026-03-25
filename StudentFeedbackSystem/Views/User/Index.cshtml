@@ -1,0 +1,249 @@
+@model UsersVM
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="card">
+    <div class="card-header"><h5><i class="bi bi-people me-2"></i>User Management</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <form id="userForm">
+                    <input type="hidden" asp-for="UserId" value="0" />
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label"></label>
+                        <input asp-for="Username" class="form-control" />
+                        <span asp-validation-for="Username" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" type="email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PasswordHash" class="form-label">Password</label>
+                        <input asp-for="PasswordHash" type="password" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="UserNumber" class="form-label"></label>
+                        <input asp-for="UserNumber" class="form-control" />
+                        <span asp-validation-for="UserNumber" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="RoleId" class="form-label">Role</label>
+                        <select asp-for="RoleId" class="form-select" asp-items="@ViewBag.Roles" required>
+                            <option value="">-- Select Role --</option>
+                        </select>
+                        <span asp-validation-for="RoleId" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="DepartmentId" class="form-label">Department</label>
+                        <select asp-for="DepartmentId" class="form-select" asp-items="@ViewBag.Departments">
+                            <option value="">-- None --</option>
+                        </select>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnSave" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button>
+                        <button type="button" id="btnClear" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Number</th>
+                                <th>Role</th>
+                                <th>Dept</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+
+                $(document).ready(function () {
+            loadUserTable();
+
+            $('#btnSave').click(function (e) {
+                e.preventDefault();
+                saveUser();
+            });
+
+            $('#btnClear').click(function (e) {
+                e.preventDefault();
+                clearUserForm();
+            });
+        });
+
+                function loadUserTable() {
+            $.ajax({
+                url: '/User/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        renderUserTable(response.data);
+                    }
+                }
+            });
+        }
+
+        function renderUserTable(data) {
+            var html = '';
+            $.each(data, function (i, item) {
+                html += '<tr>';
+                html += '<td>' + item.userId + '</td>';
+                html += '<td>' + item.username + '</td>';
+                html += '<td>' + item.email + '</td>';
+                html += '<td><code>' + item.userNumber + '</code></td>';
+                html += '<td><span class="badge bg-primary">' + (item.roleName || '') + '</span></td>';
+                html += '<td>' + (item.departmentName || '-') + '</td>';
+                html += '<td>';
+                html += '<button class="btn btn-sm btn-outline-primary" onclick="editUser(' + item.userId + ')"><i class="bi bi-pencil"></i></button> ';
+                html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteUser(' + item.userId + ')"><i class="bi bi-trash"></i></button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            $('#tableBody').html(html);
+        }
+
+        function saveUser() {
+            if (!validateUserForm()) return false;
+
+            var formData = {
+                UserId: parseInt($('#UserId').val()) || 0,
+                Username: $('#Username').val().trim(),
+                Email: $('#Email').val().trim(),
+                PasswordHash: $('#PasswordHash').val(),
+                UserNumber: $('#UserNumber').val().trim(),
+                RoleId: parseInt($('#RoleId').val()) || 0,
+                DepartmentId: $('#DepartmentId').val() ? parseInt($('#DepartmentId').val()) : null
+            };
+
+            $.ajax({
+                url: '/User/Save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.code === 0) {
+                        Swal.fire('Success!', response.message, 'success');
+                        clearUserForm();
+                        loadUserTable();
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error!', 'Something went wrong', 'error');
+                }
+            });
+        }
+
+        function editUser(id) {
+            $.ajax({
+                url: '/User/GetById?id=' + id,
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        $('#UserId').val(response.data.userId);
+                        $('#Username').val(response.data.username);
+                        $('#Email').val(response.data.email);
+                        $('#UserNumber').val(response.data.userNumber);
+                        $('#RoleId').val(response.data.roleId);
+                        $('#DepartmentId').val(response.data.departmentId || '');
+                        $('#PasswordHash').val('');
+                    }
+                }
+            });
+        }
+
+        function deleteUser(id) {
+            Swal.fire({
+                title: 'Delete?',
+                text: 'This cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Delete'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/User/Delete',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (response) {
+                            if (response.code === 0) {
+                                Swal.fire('Deleted!', response.message, 'success');
+                                loadUserTable();
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+
+
+        function validateUserForm() {
+            var isValid = true;
+            $('.error-message').remove();
+            $('.is-invalid').removeClass('is-invalid');
+
+            if ($('#Username').val().trim() === '') {
+                showError('#Username', 'Username is required');
+                isValid = false;
+            }
+            if ($('#Email').val().trim() === '') {
+                showError('#Email', 'Email is required');
+                isValid = false;
+            } else if (!isValidEmail($('#Email').val().trim())) {
+                showError('#Email', 'Invalid email format');
+                isValid = false;
+            }
+            if ($('#UserNumber').val().trim() === '') {
+                showError('#UserNumber', 'User Number is required');
+                isValid = false;
+            }
+            if (!$('#RoleId').val()) {
+                showError('#RoleId', 'Role is required');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email);
+        }
+
+        function showError(selector, message) {
+            $(selector).addClass('is-invalid');
+            $(selector).after('<span class="error-message text-danger small">' + message + '</span>');
+        }
+
+        function clearUserForm() {
+            $('#UserId').val(0);
+            $('#Username, #Email, #PasswordHash, #UserNumber').val('');
+            $('#RoleId, #DepartmentId').val('');
+            $('.is-invalid').removeClass('is-invalid');
+            $('.error-message').remove();
+        }
+
+
+    </script>
+}

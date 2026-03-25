@@ -1,0 +1,214 @@
+@model SemestersVM
+@{ ViewData["Title"] = "Semester Management"; }
+
+<div class="card">
+    <div class="card-header"><h5><i class="bi bi-calendar3 me-2"></i>Semester Management</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <form id="semesterForm">
+                    <input type="hidden" asp-for="SemesterId" value="0" />
+                    <div class="mb-3">
+                        <label asp-for="SemesterName" class="form-label"></label>
+                        <input asp-for="SemesterName" class="form-control" />
+                        <span asp-validation-for="SemesterName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="StartDate" class="form-label"></label>
+                        <input asp-for="StartDate" type="date" class="form-control" />
+                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="EndDate" class="form-label"></label>
+                        <input asp-for="EndDate" type="date" class="form-control" />
+                        <span asp-validation-for="EndDate" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnSave" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button>
+                        <button type="button" id="btnClear" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr><th>#</th>
+                                <th>Name</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Actions</th>
+                            </tr>
+                       </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+
+           $(document).ready(function () {
+            loadSemesterTable();
+
+            $('#btnSave').click(function (e) {
+                e.preventDefault();
+                saveSemester();
+            });
+
+            $('#btnClear').click(function (e) {
+                e.preventDefault();
+                clearSemesterForm();
+            });
+        });
+                function loadSemesterTable() {
+            $.ajax({
+                url: '/Semester/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        renderSemesterTable(response.data);
+                    }
+                }
+            });
+        }
+
+        function renderSemesterTable(data) {
+            var html = '';
+            $.each(data, function (i, item) {
+                var startDate = item.startDate ? new Date(item.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                var endDate = item.endDate ? new Date(item.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                html += '<tr>';
+                html += '<td>' + item.semesterId + '</td>';
+                html += '<td>' + item.semesterName + '</td>';
+                html += '<td>' + startDate + '</td>';
+                html += '<td>' + endDate + '</td>';
+                html += '<td>';
+                html += '<button class="btn btn-sm btn-outline-primary" onclick="editSemester(' + item.semesterId + ')"><i class="bi bi-pencil"></i></button> ';
+                html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteSemester(' + item.semesterId + ')"><i class="bi bi-trash"></i></button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            $('#tableBody').html(html);
+        }
+
+        function saveSemester() {
+            if (!validateSemesterForm()) return false;
+
+            var formData = {
+                SemesterId: parseInt($('#SemesterId').val()) || 0,
+                SemesterName: $('#SemesterName').val().trim(),
+                StartDate: $('#StartDate').val(),
+                EndDate: $('#EndDate').val()
+            };
+
+            $.ajax({
+                url: '/Semester/Save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.code === 0) {
+                        Swal.fire('Success!', response.message, 'success');
+                        clearSemesterForm();
+                        loadSemesterTable();
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error!', 'Something went wrong', 'error');
+                }
+            });
+        }
+
+        function editSemester(id) {
+            $.ajax({
+                url: '/Semester/GetById?id=' + id,
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        $('#SemesterId').val(response.data.semesterId);
+                        $('#SemesterName').val(response.data.semesterName);
+                        $('#StartDate').val(response.data.startDate ? response.data.startDate.split('T')[0] : '');
+                        $('#EndDate').val(response.data.endDate ? response.data.endDate.split('T')[0] : '');
+                    }
+                }
+            });
+        }
+
+        function deleteSemester(id) {
+            Swal.fire({
+                title: 'Delete?',
+                text: 'This cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Delete'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Semester/Delete',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (response) {
+                            if (response.code === 0) {
+                                Swal.fire('Deleted!', response.message, 'success');
+                                loadSemesterTable();
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+
+
+        function validateSemesterForm() {
+            var isValid = true;
+            $('.error-message').remove();
+            $('.is-invalid').removeClass('is-invalid');
+
+            if ($('#SemesterName').val().trim() === '') {
+                showError('#SemesterName', 'Semester Name is required');
+                isValid = false;
+            }
+            if ($('#StartDate').val() === '') {
+                showError('#StartDate', 'Start Date is required');
+                isValid = false;
+            }
+            if ($('#EndDate').val() === '') {
+                showError('#EndDate', 'End Date is required');
+                isValid = false;
+            }
+            if ($('#StartDate').val() && $('#EndDate').val() && $('#StartDate').val() >= $('#EndDate').val()) {
+                showError('#EndDate', 'End Date must be after Start Date');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showError(selector, message) {
+            $(selector).addClass('is-invalid');
+            $(selector).after('<span class="error-message text-danger small">' + message + '</span>');
+        }
+
+        function clearSemesterForm() {
+            $('#SemesterId').val(0);
+            $('#SemesterName').val('');
+            $('#StartDate').val('');
+            $('#EndDate').val('');
+            $('.is-invalid').removeClass('is-invalid');
+            $('.error-message').remove();
+        }
+
+     
+    </script>
+}

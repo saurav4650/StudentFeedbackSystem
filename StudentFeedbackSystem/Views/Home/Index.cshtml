@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    var name = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card" style="border-radius:16px; overflow:hidden;">
+            <div class="card-body p-4" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color:white;">
+                <h3 class="fw-bold mb-1">Welcome, @name! ??</h3>
+                <p class="mb-0 opacity-75">You are logged in as <strong>@role</strong>. Use the sidebar to navigate.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    @if (role == "Admin" || role == "Principal")
+    {
+        <div class="col-md-3">
+            <a href="/User" class="text-decoration-none">
+                <div class="stat-card"><div class="stat-label">Manage</div><div class="stat-value"><i class="bi bi-people"></i></div><div>Users</div></div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="/Department" class="text-decoration-none">
+                <div class="stat-card" style="background:linear-gradient(135deg,#059669,#10b981);"><div class="stat-label">Manage</div><div class="stat-value"><i class="bi bi-building"></i></div><div>Departments</div></div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="/Course" class="text-decoration-none">
+                <div class="stat-card" style="background:linear-gradient(135deg,#d97706,#f59e0b);"><div class="stat-label">Manage</div><div class="stat-value"><i class="bi bi-book"></i></div><div>Courses</div></div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="/Feedback" class="text-decoration-none">
+                <div class="stat-card" style="background:linear-gradient(135deg,#dc2626,#ef4444);"><div class="stat-label">View</div><div class="stat-value"><i class="bi bi-clipboard-data"></i></div><div>Feedback</div></div>
+            </a>
+        </div>
+    }
+    @if (role == "Instructor")
+    {
+        <div class="col-md-4">
+            <a href="/CourseSchedules" class="text-decoration-none">
+                <div class="stat-card"><div class="stat-label">View</div><div class="stat-value"><i class="bi bi-calendar-week"></i></div><div>My Schedules</div></div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/Feedback/MyCourseFeedback" class="text-decoration-none">
+                <div class="stat-card" style="background:linear-gradient(135deg,#059669,#10b981);"><div class="stat-label">Analytics</div><div class="stat-value"><i class="bi bi-graph-up"></i></div><div>Course Feedback</div></div>
+            </a>
+        </div>
+    }
+    @if (role == "Student")
+    {
+        <div class="col-md-4">
+            <a href="/Enrollment" class="text-decoration-none">
+                <div class="stat-card"><div class="stat-label">Manage</div><div class="stat-value"><i class="bi bi-person-plus"></i></div><div>My Enrollment</div></div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/Feedback/PendingFeedback" class="text-decoration-none">
+                <div class="stat-card" style="background:linear-gradient(135deg,#d97706,#f59e0b);"><div class="stat-label">Submit</div><div class="stat-value"><i class="bi bi-clock"></i></div><div>Pending Feedback</div></div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/Feedback/MyFeedback" class="text-decoration-none">
+                <div class="stat-card" style="background:linear-gradient(135deg,#059669,#10b981);"><div class="stat-label">View</div><div class="stat-value"><i class="bi bi-chat-square-text"></i></div><div>My Feedbacks</div></div>
+            </a>
+        </div>
+    }
+</div>

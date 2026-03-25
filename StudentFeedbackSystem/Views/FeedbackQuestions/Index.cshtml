@@ -1,0 +1,226 @@
+@model FeedbackQuestionVM
+@{
+    ViewData["Title"] = "Feedback Questions";
+}
+
+<div class="card">
+    <div class="card-header"><h5><i class="bi bi-question-circle me-2"></i>Feedback Questions</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <form id="feedbackQuestionForm">
+                    <input type="hidden" asp-for="QuestionId" value="0" />
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label">Category</label>
+                        <select asp-for="CategoryId" class="form-select" asp-items="@ViewBag.Categories" required>
+                            <option value="">-- Select Category --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuestionText" class="form-label">Question</label>
+                        <textarea asp-for="QuestionText" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="QuestionText" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuestionType" class="form-label">Type</label>
+                        <select asp-for="QuestionType" class="form-select">
+                            <option value="Rating">Rating</option><option value="Text">Text</option>
+                        </select>
+                        <span asp-validation-for="QuestionType" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="DisplayOrder" class="form-label"></label>
+                        <input asp-for="DisplayOrder" type="number" class="form-control" min="1" />
+                        <span asp-validation-for="DisplayOrder" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnSave" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button>
+                        <button type="button" id="btnClear" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Category</th>
+                                <th>Question</th>
+                                <th>Type</th>
+                                <th>Order</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        // Feedback Question Operations - AJAX CRUD
+        function saveFeedbackQuestion() {
+            if (!validateFeedbackQuestionForm()) return false;
+
+            var formData = {
+                QuestionId: parseInt($('#QuestionId').val()) || 0,
+                CategoryId: parseInt($('#CategoryId').val()) || 0,
+                QuestionText: $('#QuestionText').val().trim(),
+                QuestionType: $('#QuestionType').val(),
+                DisplayOrder: parseInt($('#DisplayOrder').val()) || 0
+            };
+
+            $.ajax({
+                url: '/FeedbackQuestions/Save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.code === 0) {
+                        Swal.fire('Success!', response.message, 'success');
+                        clearFeedbackQuestionForm();
+                        loadFeedbackQuestionTable();
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error!', 'Something went wrong', 'error');
+                }
+            });
+        }
+
+        function editFeedbackQuestion(id) {
+            $.ajax({
+                url: '/FeedbackQuestions/GetById?id=' + id,
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        $('#QuestionId').val(response.data.questionId);
+                        $('#CategoryId').val(response.data.categoryId);
+                        $('#QuestionText').val(response.data.questionText);
+                        $('#QuestionType').val(response.data.questionType);
+                        $('#DisplayOrder').val(response.data.displayOrder);
+                    }
+                }
+            });
+        }
+
+        function deleteFeedbackQuestion(id) {
+            Swal.fire({
+                title: 'Delete?',
+                text: 'This cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Delete'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/FeedbackQuestions/Delete',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (response) {
+                            if (response.code === 0) {
+                                Swal.fire('Deleted!', response.message, 'success');
+                                loadFeedbackQuestionTable();
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function loadFeedbackQuestionTable() {
+            $.ajax({
+                url: '/FeedbackQuestions/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        renderFeedbackQuestionTable(response.data);
+                    }
+                }
+            });
+        }
+
+        function renderFeedbackQuestionTable(data) {
+            var html = '';
+            $.each(data, function (i, item) {
+                html += '<tr>';
+                html += '<td>' + item.questionId + '</td>';
+                html += '<td><span class="badge bg-info">' + (item.categoryName || '') + '</span></td>';
+                html += '<td style="max-width:250px">' + item.questionText + '</td>';
+                html += '<td><span class="badge ' + (item.questionType === 'Rating' ? 'bg-warning' : 'bg-secondary') + '">' + item.questionType + '</span></td>';
+                html += '<td>' + item.displayOrder + '</td>';
+                html += '<td>';
+                html += '<button class="btn btn-sm btn-outline-primary" onclick="editFeedbackQuestion(' + item.questionId + ')"><i class="bi bi-pencil"></i></button> ';
+                html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteFeedbackQuestion(' + item.questionId + ')"><i class="bi bi-trash"></i></button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            $('#tableBody').html(html);
+        }
+
+        function validateFeedbackQuestionForm() {
+            var isValid = true;
+            $('.error-message').remove();
+            $('.is-invalid').removeClass('is-invalid');
+
+            if (!$('#CategoryId').val()) {
+                showError('#CategoryId', 'Category is required');
+                isValid = false;
+            }
+            if ($('#QuestionText').val().trim() === '') {
+                showError('#QuestionText', 'Question Text is required');
+                isValid = false;
+            }
+            if (!$('#QuestionType').val()) {
+                showError('#QuestionType', 'Question Type is required');
+                isValid = false;
+            }
+            if (!$('#DisplayOrder').val() || parseInt($('#DisplayOrder').val()) < 1) {
+                showError('#DisplayOrder', 'Display Order must be at least 1');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showError(selector, message) {
+            $(selector).addClass('is-invalid');
+            $(selector).after('<span class="error-message text-danger small">' + message + '</span>');
+        }
+
+        function clearFeedbackQuestionForm() {
+            $('#QuestionId').val(0);
+            $('#CategoryId').val('');
+            $('#QuestionText').val('');
+            $('#QuestionType').val('Rating');
+            $('#DisplayOrder').val('');
+            $('.is-invalid').removeClass('is-invalid');
+            $('.error-message').remove();
+        }
+
+        $(document).ready(function () {
+            loadFeedbackQuestionTable();
+
+            $('#btnSave').click(function (e) {
+                e.preventDefault();
+                saveFeedbackQuestion();
+            });
+
+            $('#btnClear').click(function (e) {
+                e.preventDefault();
+                clearFeedbackQuestionForm();
+            });
+        });
+    </script>
+}

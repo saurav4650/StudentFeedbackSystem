@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Student Feedback System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --header-bg: #1e1b4b;
+            --header-hover: #312e81;
+            --accent: #818cf8;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); margin: 0; }
+
+        /* Top Header / Navbar */
+        .top-navbar {
+            background: var(--header-bg);
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-navbar .navbar-brand {
+            color: white; font-weight: 700; font-size: 1.1rem;
+            display: flex; align-items: center; gap: 10px; padding: 0.75rem 1rem;
+        }
+        .top-navbar .navbar-brand i { font-size: 1.5rem; color: var(--accent); }
+        .top-navbar .navbar-brand:hover { color: white; }
+        .top-navbar .navbar-toggler {
+            border-color: rgba(255,255,255,0.3); padding: 0.35rem 0.6rem;
+        }
+        .top-navbar .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        .top-navbar .nav-link {
+            color: rgba(255,255,255,0.75) !important; font-size: 0.875rem; font-weight: 500;
+            padding: 0.75rem 0.9rem !important; transition: all 0.2s; display: flex;
+            align-items: center; gap: 6px;
+        }
+        .top-navbar .nav-link:hover { color: white !important; background: var(--header-hover); }
+        .top-navbar .nav-link.active { color: white !important; background: var(--primary); }
+        .top-navbar .nav-link i { font-size: 1rem; }
+        .top-navbar .dropdown-menu {
+            background: var(--header-bg); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 0.35rem 0; margin-top: 0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+        .top-navbar .dropdown-item {
+            color: rgba(255,255,255,0.75); font-size: 0.85rem; padding: 0.5rem 1rem;
+            display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+        }
+        .top-navbar .dropdown-item:hover { background: var(--header-hover); color: white; }
+        .top-navbar .dropdown-item.active { background: var(--primary); color: white; }
+        .top-navbar .dropdown-item i { font-size: 1rem; width: 18px; text-align: center; }
+        .top-navbar .user-section {
+            display: flex; align-items: center; gap: 10px; padding: 0.5rem 0;
+        }
+        .top-navbar .user-section .badge { font-size: 0.7rem; }
+        .top-navbar .user-section .user-name {
+            color: rgba(255,255,255,0.7); font-size: 0.85rem;
+        }
+
+        .page-content { padding: 1.5rem 2rem; }
+        .page-title-bar {
+            background: var(--card-bg); border-bottom: 1px solid #e2e8f0;
+            padding: 0.85rem 2rem;
+        }
+        .page-title-bar h5 { margin: 0; font-weight: 600; color: var(--text); font-size: 1.1rem; }
+        .card {
+            border: none; border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white; border-radius: 12px 12px 0 0 !important; padding: 1rem 1.25rem;
+            font-weight: 600;
+        }
+        .card-header h5, .card-header h4 { margin: 0; color: white; }
+        .table { margin-bottom: 0; }
+        .table th {
+            background: #f8fafc; font-size: 0.8rem; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600;
+            border-bottom: 2px solid #e2e8f0; padding: 0.75rem;
+        }
+        .table td { padding: 0.75rem; vertical-align: middle; font-size: 0.875rem; }
+        .table tbody tr:hover { background: #f1f5f9; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        .form-label { font-weight: 500; font-size: 0.85rem; color: var(--text); }
+        .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 6px; }
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white; border-radius: 12px; padding: 1.25rem;
+        }
+        .stat-card .stat-value { font-size: 2rem; font-weight: 700; }
+        .stat-card .stat-label { font-size: 0.8rem; opacity: 0.85; }
+        .star-rating { display: flex; gap: 4px; }
+        .star-rating .bi-star-fill { color: var(--warning); cursor: pointer; font-size: 1.25rem; }
+        .star-rating .bi-star { color: #d1d5db; cursor: pointer; font-size: 1.25rem; }
+        .alert-float {
+            position: fixed; top: 80px; right: 20px; z-index: 9999;
+            min-width: 300px; animation: slideIn 0.3s ease;
+        }
+        @@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    @if (User.Identity?.IsAuthenticated ?? false)
+    {
+        var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+        var userName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+        <nav class="top-navbar navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/Home">
+                    <i class="bi bi-mortarboard-fill"></i>
+                    Feedback System
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Home" ? "active" : "")" href="/Home">
+                                <i class="bi bi-house"></i> Dashboard
+                            </a>
+                        </li>
+
+                        @if (userRole == "Admin" || userRole == "Principal")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle @(currentController == "Roles" || currentController == "Department" || currentController == "Semester" || currentController == "User" || currentController == "FeedbackQuestions" ? "active" : "")"
+                                   href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i> Management
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (userRole == "Admin")
+                                    {
+                                        <li><a class="dropdown-item @(currentController == "Roles" ? "active" : "")" href="/Roles"><i class="bi bi-shield-lock"></i> Roles</a></li>
+                                    }
+                                    <li><a class="dropdown-item @(currentController == "Department" ? "active" : "")" href="/Department"><i class="bi bi-building"></i> Departments</a></li>
+                                    <li><a class="dropdown-item @(currentController == "Semester" ? "active" : "")" href="/Semester"><i class="bi bi-calendar3"></i> Semesters</a></li>
+                                    <li><a class="dropdown-item @(currentController == "User" ? "active" : "")" href="/User"><i class="bi bi-people"></i> Users</a></li>
+                                    <li><a class="dropdown-item @(currentController == "FeedbackQuestions" ? "active" : "")" href="/FeedbackQuestions"><i class="bi bi-question-circle"></i> Questions</a></li>
+                                </ul>
+                            </li>
+                        }
+
+                        @if (userRole == "Admin" || userRole == "Principal" || userRole == "Instructor")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Course" ? "active" : "")" href="/Course">
+                                    <i class="bi bi-book"></i> Courses
+                                </a>
+                            </li>
+                        }
+
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Feedback" ? "active" : "")" href="/Feedback">
+                                <i class="bi bi-chat-square-text"></i> Feedback
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="user-section">
+                        <span class="badge bg-primary">@userRole</span>
+                        <span class="user-name">@userName</span>
+                        <a href="/Login/Logout" class="btn btn-outline-light btn-sm">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="page-title-bar">
+            <h5>@ViewData["Title"]</h5>
+        </div>
+
+        <div class="page-content">
+            @RenderBody()
+        </div>
+    }
+    else
+    {
+        @RenderBody()
+    }
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

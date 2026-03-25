@@ -1,0 +1,182 @@
+@model RolesVM
+@{ ViewData["Title"] = "Role Management"; }
+
+<div class="card">
+    <div class="card-header"><h5><i class="bi bi-shield-lock me-2"></i>Role Management</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <form id="roleForm">
+                    <input type="hidden" asp-for="RoleId" value="0" />
+                    <div class="mb-3">
+                        <label asp-for="RoleName" class="form-label"></label>
+                        <input asp-for="RoleName" class="form-control" />
+                        <span asp-validation-for="RoleName" class="text-danger"></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnSave" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button>
+                        <button type="button" id="btnClear" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Role Name</th>
+                                <th>Actions</th>
+                            </tr>
+                       </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+
+
+        $(document).ready(function () {
+            loadRoleTable();
+
+            $('#btnSave').click(function (e) {
+                e.preventDefault();
+                saveRole();
+            });
+
+            $('#btnClear').click(function (e) {
+                e.preventDefault();
+                clearRoleForm();
+            });
+        });
+
+
+        function loadRoleTable() {
+            $.ajax({
+                url: '/Roles/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        renderRoleTable(response.data);
+                    }
+                }
+            });
+        }
+
+        function renderRoleTable(data) {
+            var html = '';
+            $.each(data, function (i, item) {
+                html += '<tr>';
+                html += '<td>' + item.roleId + '</td>';
+                html += '<td>' + item.roleName + '</td>';
+                html += '<td>';
+                html += '<button class="btn btn-sm btn-outline-primary" onclick="editRole(' + item.roleId + ')"><i class="bi bi-pencil"></i></button> ';
+                html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteRole(' + item.roleId + ')"><i class="bi bi-trash"></i></button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            $('#tableBody').html(html);
+        }
+
+        function saveRole() {
+            if (!validateRoleForm()) return false;
+
+            var formData = {
+                RoleId: parseInt($('#RoleId').val()) || 0,
+                RoleName: $('#RoleName').val().trim()
+            };
+
+            $.ajax({
+                url: '/Roles/Save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.code === 0) {
+                        Swal.fire('Success!', response.message, 'success');
+                        clearRoleForm();
+                        loadRoleTable();
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error!', 'Something went wrong', 'error');
+                }
+            });
+        }
+
+        function editRole(id) {
+            $.ajax({
+                url: '/Roles/GetById?id=' + id,
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        $('#RoleId').val(response.data.roleId);
+                        $('#RoleName').val(response.data.roleName);
+                    }
+                }
+            });
+        }
+
+        function deleteRole(id) {
+            Swal.fire({
+                title: 'Delete?',
+                text: 'This cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Delete'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Roles/Delete',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (response) {
+                            if (response.code === 0) {
+                                Swal.fire('Deleted!', response.message, 'success');
+                                loadRoleTable();
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+
+        function validateRoleForm() {
+            var isValid = true;
+            $('.error-message').remove();
+            $('.is-invalid').removeClass('is-invalid');
+
+            if ($('#RoleName').val().trim() === '') {
+                showError('#RoleName', 'Role Name is required');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showError(selector, message) {
+            $(selector).addClass('is-invalid');
+            $(selector).after('<span class="error-message text-danger small">' + message + '</span>');
+        }
+
+        function clearRoleForm() {
+            $('#RoleId').val(0);
+            $('#RoleName').val('');
+            $('.is-invalid').removeClass('is-invalid');
+            $('.error-message').remove();
+        }
+
+    </script>
+}

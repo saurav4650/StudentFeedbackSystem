@@ -1,0 +1,239 @@
+@model CoursesVM
+@{
+    ViewData["Title"] = "Course Management";
+    bool isViewOnly = ViewBag.IsViewOnly ?? false;
+}
+
+<div class="card">
+    <div class="card-header"><h5><i class="bi bi-book me-2"></i>Course Management @(isViewOnly ? "(View Only)" : "")</h5></div>
+    <div class="card-body">
+        <div class="row">
+            @if (!isViewOnly)
+            {
+                <div class="col-md-4">
+                    <form id="courseForm">
+                        <input type="hidden" asp-for="CourseId" value="0" />
+                        <div class="mb-3">
+                            <label asp-for="CourseCode" class="form-label"></label>
+                            <input asp-for="CourseCode" class="form-control" />
+                            <span asp-validation-for="CourseCode" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="CourseName" class="form-label"></label>
+                            <input asp-for="CourseName" class="form-control" />
+                            <span asp-validation-for="CourseName" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Credits" class="form-label"></label>
+                            <input asp-for="Credits" type="number" class="form-control" min="1" />
+                            <span asp-validation-for="Credits" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="DepartmentId" class="form-label">Department</label>
+                            <select asp-for="DepartmentId" class="form-select" asp-items="@ViewBag.Departments" required>
+                                <option value="">-- Select Department --</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" id="btnSave" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button>
+                            <button type="button" id="btnClear" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</button>
+                        </div>
+                    </form>
+                </div>
+            }
+            <div class="@(isViewOnly ? "col-12" : "col-md-8")">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                           <tr>
+                                 <th>#</th>
+                                 <th>Code</th>
+                                 <th>Name</th>
+                                 <th>Credits</th>
+                                 <th>Department</th>
+                                 @if(!isViewOnly)
+                                 {
+                                    <th>Actions</th>
+                                 }
+                           </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>var isViewOnly = @(isViewOnly ? "true" : "false");</script>
+    <script>
+
+         $(document).ready(function () {
+            loadCourseTable();
+
+            $('#btnSave').click(function (e) {
+                e.preventDefault();
+                saveCourse();
+            });
+
+            $('#btnClear').click(function (e) {
+                e.preventDefault();
+                clearCourseForm();
+            });
+        });
+
+           function loadCourseTable() {
+            $.ajax({
+                url: '/Course/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.code === 0) {
+                        renderCourseTable(response.data);
+                    }
+                }
+            });
+        }
+
+           function renderCourseTable(data) {
+            var html = '';
+            $.each(data, function (i, item) {
+                html += '<tr>';
+                html += '<td>' + item.courseId + '</td>';
+                html += '<td><span class="badge bg-primary">' + item.courseCode + '</span></td>';
+                html += '<td>' + item.courseName + '</td>';
+                html += '<td>' + item.credits + '</td>';
+                html += '<td>' + (item.departmentName || '') + '</td>';
+                if (typeof isViewOnly === 'undefined' || !isViewOnly) {
+                    html += '<td>';
+                    html += '<button class="btn btn-sm btn-outline-primary" onclick="editCourse(' + item.courseId + ')"><i class="bi bi-pencil"></i></button> ';
+                    html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(' + item.courseId + ')"><i class="bi bi-trash"></i></button>';
+                    html += '</td>';
+                }
+                html += '</tr>';
+            });
+            $('#tableBody').html(html);
+        }
+
+        function saveCourse() {
+            if (!validateCourseForm()) return false;
+
+            var formData = {
+                CourseId: parseInt($('#CourseId').val()) || 0,
+                CourseCode: $('#CourseCode').val().trim(),
+                CourseName: $('#CourseName').val().trim(),
+                Credits: parseInt($('#Credits').val()) || 0,
+                DepartmentId: parseInt($('#DepartmentId').val()) || 0
+            };
+
+            $.ajax({
+                url: '/Course/Save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.code == 0) {
+                        Swal.fire('Success!', response.message, 'success');
+                        clearCourseForm();
+                        loadCourseTable();
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error!', 'Something went wrong', 'error');
+                }
+            });
+        }
+
+        function editCourse(id) {
+            $.ajax({
+                url: '/Course/GetById?id=' + id,
+                type: 'GET',
+                success: function (response) {
+                    if (response.code == 0) {
+                        $('#CourseId').val(response.data.courseId);
+                        $('#CourseCode').val(response.data.courseCode);
+                        $('#CourseName').val(response.data.courseName);
+                        $('#Credits').val(response.data.credits);
+                        $('#DepartmentId').val(response.data.departmentId);
+                    }
+                }
+            });
+        }
+
+        function deleteCourse(id) {
+            Swal.fire({
+                title: 'Delete?',
+                text: 'This cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Delete'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Course/Delete',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (response) {
+                            if (response.code === 0) {
+                                Swal.fire('Deleted!', response.message, 'success');
+                                loadCourseTable();
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+     
+
+     
+
+        function validateCourseForm() {
+            var isValid = true;
+            $('.error-message').remove();
+            $('.is-invalid').removeClass('is-invalid');
+
+            if ($('#CourseCode').val().trim() === '') {
+                showError('#CourseCode', 'Course Code is required');
+                isValid = false;
+            }
+            if ($('#CourseName').val().trim() === '') {
+                showError('#CourseName', 'Course Name is required');
+                isValid = false;
+            }
+            if (!$('#Credits').val() || parseInt($('#Credits').val()) < 1) {
+                showError('#Credits', 'Credits must be at least 1');
+                isValid = false;
+            }
+            if (!$('#DepartmentId').val()) {
+                showError('#DepartmentId', 'Department is required');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showError(selector, message) {
+            $(selector).addClass('is-invalid');
+            $(selector).after('<span class="error-message text-danger small">' + message + '</span>');
+        }
+
+        function clearCourseForm() {
+            $('#CourseId').val(0);
+            $('#CourseCode, #CourseName').val('');
+            $('#Credits').val('');
+            $('#DepartmentId').val('');
+            $('.is-invalid').removeClass('is-invalid');
+            $('.error-message').remove();
+        }
+
+       
+    </script>
+}

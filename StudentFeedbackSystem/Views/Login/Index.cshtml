@@ -1,0 +1,494 @@
+@model StudentFeedbackSystem.Models.LoginVM
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div id="login-page">
+    <div class="login-split">
+
+        <!-- Left panel: branding -->
+        <div class="brand-panel">
+            <div class="brand-inner">
+                <div class="brand-logo">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <h1 class="brand-name">EduFeedback</h1>
+                <p class="brand-tagline">Collect. Analyze. Improve.</p>
+                <ul class="brand-features">
+                    <li><i class="bi bi-check-circle-fill"></i> Real-time feedback collection</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Smart analytics dashboard</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Secure & confidential</li>
+                </ul>
+            </div>
+            <div class="brand-art">
+                <div class="art-circle c1"></div>
+                <div class="art-circle c2"></div>
+                <div class="art-circle c3"></div>
+            </div>
+        </div>
+
+        <!-- Right panel: form -->
+        <div class="form-panel">
+            <div class="form-inner">
+
+                <div class="form-header">
+                    <h2>Welcome back</h2>
+                    <p>Sign in to your account to continue</p>
+                </div>
+
+                @if (ViewBag.Message != null)
+                {
+                    <div class="alert-box">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <span>@ViewBag.Message</span>
+                    </div>
+                }
+
+                <form method="post" id="loginForm">
+
+                    <div class="field">
+                        <label for="usernameInput">Username</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person field-icon"></i>
+                            <input asp-for="Username" type="text" id="usernameInput"
+                                   placeholder="Enter your username"
+                                   autocomplete="username" required />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="passwordInput">Password</label>
+                        <div class="input-wrap">
+                            <i class="bi bi-lock field-icon"></i>
+                            <input asp-for="Password" type="password" id="passwordInput"
+                                   placeholder="Enter your password"
+                                   autocomplete="current-password" required />
+                            <button type="button" id="togglePassword" class="eye-btn" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="loginBtn">
+                        <span class="btn-idle">
+                            Sign In <i class="bi bi-arrow-right"></i>
+                        </span>
+                        <span class="btn-busy" style="display:none;">
+                            <span class="spin"></span> Signing in…
+                        </span>
+                    </button>
+
+                </form>
+
+                <p class="secure-note">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    Protected by secure cookie authentication
+                </p>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* ── Reset ── */
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* ── Page ── */
+    #login-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        background: #f5f6fa;
+    }
+
+    /* ── Two-column split ── */
+    .login-split {
+        display: flex;
+        width: 100%;
+        min-height: 100vh;
+    }
+
+    /* ══════════════════════════════
+       LEFT — Brand panel
+    ══════════════════════════════ */
+    .brand-panel {
+        flex: 0 0 42%;
+        background: linear-gradient(160deg, #1e3a5f 0%, #16213e 60%, #0f3460 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 3rem 3.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .brand-inner {
+        position: relative;
+        z-index: 2;
+    }
+
+    .brand-logo {
+        width: 64px;
+        height: 64px;
+        background: rgba(255,255,255,0.12);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255,255,255,0.18);
+    }
+
+        .brand-logo i {
+            font-size: 1.8rem;
+            color: #7dd3fc;
+        }
+
+    .brand-name {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.4rem;
+    }
+
+    .brand-tagline {
+        font-size: 0.95rem;
+        color: rgba(255,255,255,0.55);
+        margin-bottom: 2.5rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+    }
+
+    .brand-features {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+    }
+
+        .brand-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.9rem;
+        }
+
+            .brand-features li i {
+                color: #4ade80;
+                font-size: 0.95rem;
+                flex-shrink: 0;
+            }
+
+    /* decorative circles */
+    .brand-art {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+    }
+
+    .art-circle {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .c1 {
+        width: 320px;
+        height: 320px;
+        bottom: -80px;
+        right: -80px;
+    }
+
+    .c2 {
+        width: 200px;
+        height: 200px;
+        bottom: 40px;
+        right: 20px;
+        border-color: rgba(125,211,252,0.1);
+    }
+
+    .c3 {
+        width: 90px;
+        height: 90px;
+        top: 60px;
+        right: 60px;
+        background: rgba(125,211,252,0.04);
+        border-color: rgba(125,211,252,0.15);
+    }
+
+    /* ══════════════════════════════
+       RIGHT — Form panel
+    ══════════════════════════════ */
+    .form-panel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 2rem;
+        background: #fff;
+    }
+
+    .form-inner {
+        width: 100%;
+        max-width: 400px;
+        animation: slideUp 0.5s ease both;
+    }
+
+    @keyframes slideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Header */
+    .form-header {
+        margin-bottom: 2rem;
+    }
+
+        .form-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.35rem;
+        }
+
+        .form-header p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+    /* Alert */
+    .alert-box {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0.75rem 1rem;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        color: #b91c1c;
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+    }
+
+        .alert-box i {
+            color: #ef4444;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+    /* Fields */
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        margin-bottom: 1.1rem;
+    }
+
+        .field label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #374151;
+            letter-spacing: 0.01em;
+        }
+
+    .input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .field-icon {
+        position: absolute;
+        left: 0.9rem;
+        color: #9ca3af;
+        font-size: 0.95rem;
+        pointer-events: none;
+    }
+
+    .input-wrap input {
+        width: 100%;
+        padding: 0.72rem 2.6rem;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        color: #111827;
+        background: #f9fafb;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        font-family: inherit;
+    }
+
+        .input-wrap input::placeholder {
+            color: #d1d5db;
+        }
+
+        .input-wrap input:focus {
+            border-color: #2563eb;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+    .eye-btn {
+        position: absolute;
+        right: 0.75rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #9ca3af;
+        padding: 0.2rem;
+        font-size: 0.95rem;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+
+        .eye-btn:hover {
+            color: #374151;
+        }
+
+    /* Submit */
+    .submit-btn {
+        width: 100%;
+        margin-top: 0.75rem;
+        padding: 0.8rem;
+        background: #1d4ed8;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(29,78,216,0.3);
+    }
+
+        .submit-btn:hover {
+            background: #1e40af;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(29,78,216,0.35);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+    .btn-idle, .btn-busy {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .spin {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spinning 0.65s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spinning {
+        to
+
+    {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    /* Secure note */
+    .secure-note {
+        text-align: center;
+        margin-top: 1.75rem;
+        font-size: 0.76rem;
+        color: #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+        .secure-note i {
+            color: #22c55e;
+            font-size: 0.85rem;
+        }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+        .brand-panel
+
+    {
+        display: none;
+    }
+
+    .form-panel {
+        padding: 2rem 1.5rem;
+        background: #f5f6fa;
+    }
+
+    .form-inner {
+        max-width: 100%;
+    }
+
+    }
+</style>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Password toggle
+            const toggle = document.getElementById('togglePassword');
+            const pwd    = document.getElementById('passwordInput');
+            if (toggle && pwd) {
+                toggle.addEventListener('click', function () {
+                    const show = pwd.type === 'password';
+                    pwd.type = show ? 'text' : 'password';
+                    this.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+                });
+            }
+
+            // Loading state on submit
+            const form = document.getElementById('loginForm');
+            const btn  = document.getElementById('loginBtn');
+            if (form && btn) {
+                form.addEventListener('submit', function () {
+                    btn.querySelector('.btn-idle').style.display = 'none';
+                    btn.querySelector('.btn-busy').style.display = 'flex';
+                    btn.disabled = true;
+                });
+            }
+
+            // Auto-focus
+            const u = document.getElementById('usernameInput');
+            if (u) setTimeout(() => u.focus(), 400);
+        })();
+    </script>
+}
