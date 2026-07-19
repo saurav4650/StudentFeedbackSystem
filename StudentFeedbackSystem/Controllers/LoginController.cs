@@ -58,11 +58,17 @@ namespace StudentFeedbackSystem.Controllers
 
             return RedirectToAction("Index", "Home");
         }
-         
+
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Login");
+
+        }
+
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
     }
 }
