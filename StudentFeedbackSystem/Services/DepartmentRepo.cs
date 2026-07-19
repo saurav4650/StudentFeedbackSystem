@@ -42,7 +42,10 @@ namespace StudentFeedbackSystem.Services
                 else
                 {
                     var existing = ctx.Departments.Find(obj.DepartmentId);
-                    if (existing == null) return -1;
+                    if (existing == null) {
+                        return -1;
+                    }
+                   
                     existing.DepartmentCode = obj.DepartmentCode;
                     existing.DepartmentName = obj.DepartmentName;
                     ctx.SaveChanges();
@@ -60,7 +63,10 @@ namespace StudentFeedbackSystem.Services
             try
             {
                 var entity = ctx.Departments.Find(id);
-                if (entity == null) return false;
+                if (entity == null)
+                {
+                    return false;
+                }
                 ctx.Departments.Remove(entity);
                 ctx.SaveChanges();
                 return true;
